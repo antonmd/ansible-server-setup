@@ -26,7 +26,7 @@
       authorized_key:
         user: "{{ username }}"
         state: present
-        key: "{{ lookup('file', './key/key.pub') }}"
+        key: "{{ lookup('file', public_key) }}"
 
     - name: Change SSH port
       lineinfile:

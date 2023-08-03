@@ -1,0 +1,58 @@
+---
+- hosts: all
+  become: yes
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Upgrade all packages to the latest version
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+
+    - name: Create a new user
+      user:
+        name: "{{ username }}"
+        shell: /bin/bash
+        createhome: yes
+
+    - name: Allow 'user' to run sudo without password
+      lineinfile:
+        dest: /etc/sudoers
+        line: '{{ username }} ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: Set authorized key taken from file
+      authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ lookup('file', './key/key.pub') }}"
+
+    - name: Change SSH port
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^#?Port'
+        line: "Port {{ ssh_port }}"
+        state: present
+        backup: yes
+
+    - name: Disable password authentication
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+        backup: yes
+
+    - name: Disable root login
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+        backup: yes
+
+    - name: Restart sshd
+      service:
+        name: sshd
+        state: restarted

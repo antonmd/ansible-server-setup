@@ -7,8 +7,10 @@
   tasks:
     - name: Upgrade all packages to the latest version
       ansible.builtin.package:
+        update_cache: true
         name: '*'
         state: latest
+        autoremove: true
 
     - name: Create a new user
       user:
